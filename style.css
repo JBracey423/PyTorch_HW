@@ -1,0 +1,4 @@
+#drop-area:hover {
+    border-color: blue;
+    cursor: pointer;
+}
