@@ -7,7 +7,10 @@ async function loadModel() {
 
 async function predict(imageData) {
     const tensor = new ort.Tensor("float32", imageData, [1, 3, 64, 64]);
-    const results = await session.run({ input: tensor });
+
+    const results = await session.run({
+        input: tensor
+    });
     return results.output.data;
 }
 
@@ -49,14 +52,22 @@ async function handleImage(file) {
 
         const imageData = ctx.getImageData(0, 0, 64, 64).data;
 
-        let input = [];
+        let input = new Float32Array(1 * 3 * 64 * 64);
+
+        let pixelIndex = 0;
         for (let i = 0; i < imageData.length; i += 4) {
-            input.push(imageData[i] / 255);
-            input.push(imageData[i + 1] / 255);
-            input.push(imageData[i + 2] / 255);
+            const r = imageData[i] / 255;
+            const g = imageData[i + 1] / 255;
+            const b = imageData[i + 2] / 255;
+
+            input[pixelIndex] = r; // R
+            input[pixelIndex + 64 * 64] = g; // G
+            input[pixelIndex + 2 * 64 * 64] = b; // B
+
+            pixelIndex++;
         }
 
-        currentImageData = new Float32Array(input);
+        currentImageData = input;
 
         document.getElementById("result").innerText = "Image ready. Click Calculate.";
     };
@@ -79,7 +90,7 @@ dropArea.addEventListener("drop", (e) => {
 
 document.getElementById("predictBtn").addEventListener("click", async () => {
     if (!currentImageData) {
-        document.getElementById("result").innerText = "Please upload an image first.";
+        document.getElementById("result").innerText = "Upload image first.";
         return;
     }
 
@@ -88,5 +99,6 @@ document.getElementById("predictBtn").addEventListener("click", async () => {
 
     document.getElementById("result").innerText = "Prediction: " + label;
 });
+console.log(output);
 
 loadModel();
